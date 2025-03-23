@@ -7,4 +7,4 @@ function). Em ambas etapas do trabalho, tais modelos utilizam o paradigma superv
 a partir dos pares, vetor de características(variáveis regressoras) e variável dependente. Contudo, a tarefa
 da primeira etapa trata-se do desenvolvimento de um sistema que faz predições quantitativas (regressão),
 ao passo que a segunda etapa é caracterizada pelo desenvolvimento de um sistema que realiza predições
-qualitativas (classicação).
+qualitativas (classificação).
