@@ -1,7 +1,7 @@
 # Inteligência Artificial - Construção de modelos de regressão e classificação
 ## Atividade avaliativa 1
 
-O presente trabalho é composto por duas etapas em que deve-se utilizar os conceitos de IA baseados em modelos
+O presente projeto é composto por duas etapas em que deve-se utilizar os conceitos de IA baseados em modelos
 preditivos que realizam seu processo de aprendizagem através da minimização de uma função custo (loss
 function). Em ambas etapas do trabalho, tais modelos utilizam o paradigma supervisionado para aprender
 a partir dos pares, vetor de características(variáveis regressoras) e variável dependente. Contudo, a tarefa
