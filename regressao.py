@@ -1,188 +1,222 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-## Questão 1: Plot de um gráfico de espalhamento (scatter plot) para visualizar a relação entre a variável independente e a variável dependente ##
+# 1. Carregando os dados
+# [Temperatura, pH, Atividade enzimática]
+data_path = r"C:\Users\Bruno Matos\Desktop\IA_modelosderegressaoeclassificacao\dados\atividade_enzimatica.csv"
+data = np.genfromtxt(data_path, delimiter=",")
 
-# Caminho para o arquivo CSV
-file_path = r"C:\Users\Bruno Matos\Desktop\IA_modelosderegressaoeclassificacao\dados\atividade_enzimatica.csv"
+# Extraindo as variáveis:
+temperatura = data[:, 0].reshape(-1, 1)
+ph = data[:, 1].reshape(-1, 1)
+atividade = data[:, 2].reshape(-1, 1)
 
-linhas = np.genfromtxt(file_path, delimiter='\n', dtype=str)
-
-# Separa as strings por vírgulas e converte para float
-dados = np.array([list(map(float, linha.split(','))) for linha in linhas])
-
-# Coluna 0: Temperatura
-# Coluna 1: pH
-# Coluna 2: Atividade enzimática
-temperatura = dados[:, 0]
-ph = dados[:, 1]
-atividade = dados[:, 2]
-
-# Visualização inicial dos dados
+# 2. Visualização inicial dos dados
+# Cria dois gráficos de dispersão: um para Temperatura vs Atividade e outro para pH vs Atividade.
 plt.figure(figsize=(12, 5))
 
-# Gráfico: Atividade enzimática vs Temperatura
 plt.subplot(1, 2, 1)
-plt.scatter(temperatura, atividade, color='blue', alpha=0.7)
+plt.scatter(temperatura, atividade, color='blue', edgecolors='k')
 plt.xlabel("Temperatura")
-plt.ylabel("Atividade enzimática")
-plt.title("Atividade enzimática vs Temperatura")
+plt.ylabel("Atividade Enzimática")
+plt.title("Temperatura vs Atividade Enzimática")
 
-# Gráfico: Atividade enzimática vs pH
 plt.subplot(1, 2, 2)
-plt.scatter(ph, atividade, color='green', alpha=0.7)
-plt.xlabel("pH")
-plt.ylabel("Atividade enzimática")
-plt.title("Atividade enzimática vs pH")
+plt.scatter(ph, atividade, color='red', edgecolors='k')
+plt.xlabel("pH da Solução")
+plt.ylabel("Atividade Enzimática")
+plt.title("pH vs Atividade Enzimática")
 
 plt.tight_layout()
 plt.show()
 
-## Questão 2: Organizando os dados para a modelagem ##
+# Discussão inicial:
 
-N = dados.shape[0]
+# A partir dos gráficos, podemos observar a relação entre as variáveis preditoras (temperatura e pH) e a variável resposta (atividade enzimática).
+# Um modelo é capaz de entender o padrão entre as variáveis regressoras e as observadas deve capturar, a influência tanto da temperatura
+# quanto do pH na atividade enzimática. Em um modelo linear, essa relação é representada pela combinação linear de cada preditor com seu coeficiente mais um intercepto
+# (que reflete a atividade básica quando os preditores são nulos).
+#
+# Entretanto, se a relação verdadeira for não linear ou se houver interação entre as
+# variáveis, o modelo pode precisar de transformações ou de técnicas que capturem essa 
+# não linearidade. A regularização Tikhonov (Ridge) introduz um parâmetro lambda que corrige garndes 
+# coeficientes, ajudando a evitar sobreajuste, etc.
 
-# Número de variáveis independentes (p). Aqui, p = 2 (Temperatura e pH).
-p = 2
+# 3. Organização dos dados para o modelo
+# Monta a matriz X (incluindo o intercepto) e o vetor y.
+N = data.shape[0]
+# X terá 3 colunas: a primeira para o intercepto, a segunda para temperatura e a terceira para o pH.
+X = np.concatenate((np.ones((N, 1)), temperatura, ph), axis=1)
+y = atividade
 
-# Construindo a matriz de variáveis regressoras:
-# Primeiro, criando uma matriz com as colunas temperaturas e pH.
-X_regressoras = np.column_stack((temperatura, ph))  # dimensão: (N, 2)
+# 4. Definição das funções dos modelos de regressão
 
-# Em seguida, adicionando uma coluna de '1's para incluir o intercepto no modelo:
-X = np.concatenate((np.ones((N, 1)), X_regressoras), axis=1)  # dimensão: (N, 3)
+def ols_regression(X, y):
+    """Estimativa MQO tradicional via Equação Normal."""
+    return np.linalg.inv(X.T @ X) @ X.T @ y
 
-# Organizando a variável dependente 'Atividade enzimática' em um vetor coluna:
-y = atividade.reshape(-1, 1)  # dimensão: (N, 1)
+def ridge_regression(X, y, lbda):
+    """Estimativa do modelo regularizado (Tikhonov/Ridge)."""
+    I = np.eye(X.shape[1])
+    return np.linalg.inv(X.T @ X + lbda * I) @ X.T @ y
 
-## Questão 3 e 4: Implementações dos modelos de regressão linear ##
+def predict(X, beta):
+    """Calcula as predições para um vetor de coeficientes beta."""
+    return X @ beta
 
-# Método dos mínimos quadrados ordinários (MQO tradicional) #
+# 5. Estimativa dos modelos
 
-B = np.linalg.pinv(X.T @ X) @ X.T @ y
+print("---- Estimativas do vetor β ----\n")
 
-print("Parâmetros estimados (MQO tradicional):")
-print(B)
+# a) MQO tradicional (equivalente a lambda = 0)
+beta_ols = ols_regression(X, y)
+print("MQO Tradicional (λ = 0):")
+print(beta_ols)
 
-# MQO Regularizado (Tikhonov) #
-
-# Definindo os valores de lambda a serem testados:
+# b) MQO Regularizado (Tikhonov/Ridge) para diferentes valores de λ:
 lambdas = [0, 0.25, 0.5, 0.75, 1]
+beta_ridge = {}  # dicionário para armazenar os coeficientes para cada λ
 
-# Cria um dicionário para armazenar as estimativas para cada valor de lambda.
-beta_estimates = {}
+print("\nMQO Regularizado (Tikhonov):")
+for lbda in lambdas:
+    beta = ridge_regression(X, y, lbda)
+    beta_ridge[lbda] = beta
+    print(f"λ = {lbda}:")
+    print(beta)
+    
+# c) Modelo da Média dos Valores Observáveis:
+# Aqui, a predição é feita simplesmente utilizando a média de y. Podemos representar essa
+# "estimativa" também como um vetor β em que o intercepto é igual à média e os coeficientes dos
+# demais preditores são zero.
+mean_y = np.mean(y)
+beta_mean = np.array([[mean_y], [0], [0]])
+print("\nModelo da Média dos Valores Observáveis:")
+print(beta_mean)
 
-# A solução regularizada é dada por: B = (X^T X + λ I)^(-1) X^T y
-for lam in lambdas:
-    reg_matrix = lam * np.eye(X.shape[1])  # Matriz identidade de tamanho (p+1) x (p+1)
-    B_reg = np.linalg.inv(X.T @ X + reg_matrix) @ X.T @ y
-    beta_estimates[f"λ = {lam}"] = B_reg
+# =====================================================================
+# 5. Validação Monte Carlo 
+# =====================================================================
 
-# Modelo de Média de valores observáveis #
+def compute_rss(y_true, y_pred):
+    """Calcula a Soma dos Quadrados dos Resíduos (RSS)."""
+    return np.sum((y_true - y_pred) ** 2)
 
-# Neste modelo, o intercepto é igual à média dos valores observados de y e os coeficientes par as variáveis (Temperatura e pH) são definidos como zero, pois, a ideia é prever, para qualquer entrada, o valor médio observado da variável dependente (y)
-beta_media = np.array([[np.mean(y)], [0.0], [0.0]])
-beta_estimates["Média dos Valores Observáveis"] = beta_media
+R = 500  # 500 rodadas
 
-# Exibe as 6 estimativas do vetor β:
-print("\nEstimativas dos coeficientes:")
-for key, beta_val in beta_estimates.items():
-    print(key)
-    print(beta_val)
-    print("---------------")
+# Inicialização das listas para armazenar o RSS de cada modelo
+rss_mean_list    = []
+rss_ols_list     = []
+rss_ridge_025_list = []
+rss_ridge_05_list  = []
+rss_ridge_075_list = []
+rss_ridge_1_list   = []
 
-## Questão 5: Validação dos modelos ##
-
-R = 500
-n_train = int(0.8 * N)  # Considerando 80% dos dados para treinamento
-
-# Inicializa, aqui, um dicionário para armazenar os valores de RSS para cada modelo
-rss_results = {
-    "Média dos Valores Observáveis": [],
-    "MQO tradicional": [],
-    "MQO regularizado (λ=0.25)": [],
-    "MQO regularizado (λ=0.5)": [],
-    "MQO regularizado (λ=0.75)": [],
-    "MQO regularizado (λ=1)": []
-}
-
-# Loop de Monte Carlo
 for r in range(R):
-    # Embaralha os índices e dividir em treino/teste
+    # Embaralha os índices e realiza o particionamento em 80% treino e 20% teste
     indices = np.random.permutation(N)
-    train_idx = indices[:n_train]
-    test_idx = indices[n_train:]
-    X_train = X[train_idx, :]
-    y_train = y[train_idx, :]
-    X_test = X[test_idx, :]
-    y_test = y[test_idx, :]
-    
-    # Modelo da Média: intercepto = mean(y_train) e coeficientes das variáveis = 0
-    beta_media_sim = np.array([[np.mean(y_train)], [0.0], [0.0]])
-    y_pred_media = X_test @ beta_media_sim
-    rss_media = np.sum((y_test - y_pred_media)**2)
-    rss_results["Média dos Valores Observáveis"].append(rss_media)
-    
-    # MQO Regularizado para cada valor de lambda (λ = 0 corresponde ao MQO tradicional)
-    for lam in lambdas:
-        reg_matrix = lam * np.eye(X_train.shape[1])
-        beta_sim = np.linalg.inv(X_train.T @ X_train + reg_matrix) @ (X_train.T @ y_train)
-        y_pred = X_test @ beta_sim
-        rss_value = np.sum((y_test - y_pred)**2)
-        if lam == 0:
-            rss_results["MQO tradicional"].append(rss_value)
-        elif lam == 0.25:
-            rss_results["MQO regularizado (λ=0.25)"].append(rss_value)
-        elif lam == 0.5:
-            rss_results["MQO regularizado (λ=0.5)"].append(rss_value)
-        elif lam == 0.75:
-            rss_results["MQO regularizado (λ=0.75)"].append(rss_value)
-        elif lam == 1:
-            rss_results["MQO regularizado (λ=1)"].append(rss_value)
+    train_size = int(0.8 * N)
+    train_idx, test_idx = indices[:train_size], indices[train_size:]
 
-## Questão 6: Resumo dos Resultados ##
+    X_train, y_train = X[train_idx], y[train_idx]
+    X_test, y_test   = X[test_idx],  y[test_idx]
 
-# Após as R rodadas, para cada modelo, calcula-se média, desvio-padrão, valor máximo e mínimo do RSS.
-print("\nResumo dos Resultados (RSS - Residual Sum of Squares) para cada modelo em 500 simulações:")
-header = "{:<40} {:>10} {:>10} {:>15} {:>15}".format("Modelo", "Média", "Std", "Maior Valor", "Menor Valor")
-print(header)
-print("-" * len(header))
-for model, rss_list in rss_results.items():
-    rss_arr = np.array(rss_list)
-    media = np.mean(rss_arr)
-    std = np.std(rss_arr)
-    max_val = np.max(rss_arr)
-    min_val = np.min(rss_arr)
-    linha = "{:<40} {:10.4f} {:10.4f} {:15.4f} {:15.4f}".format(model, media, std, max_val, min_val)
-    print(linha)
+    # Modelo da Média dos Valores Observáveis
+    mean_y_train = np.mean(y_train)
+    y_pred_mean = np.full_like(y_test, mean_y_train)
+    rss_mean = compute_rss(y_test, y_pred_mean)
+    rss_mean_list.append(rss_mean)
 
-############## RESULTADOS E DISCURSÕES ################
+    # MQO tradicional (λ = 0)
+    beta_ols_sim = ols_regression(X_train, y_train)
+    y_pred_ols = predict(X_test, beta_ols_sim)
+    rss_ols = compute_rss(y_test, y_pred_ols)
+    rss_ols_list.append(rss_ols)
 
-# Resultados Observados:
-# ---------------------------------------------------------------------------
-# Modelo                                        Média        Std     Maior Valor     Menor Valor
-# ----------------------------------------------------------------------------------------------
-# Média dos Valores Observáveis               22.8645     1.2090         26.4052         19.5957
-# MQO tradicional                              4.3381     0.4164          5.5275          3.1499
-# MQO regularizado (λ=0.25)                    4.3384     0.4164          5.5307          3.1578
-# MQO regularizado (λ=0.5)                     4.3391     0.4166          5.5413          3.1662
-# MQO regularizado (λ=0.75)                    4.3403     0.4168          5.5549          3.1750
-# MQO regularizado (λ=1)                       4.3420     0.4171          5.5690          3.1842
-# ---------------------------------------------------------------------------
-#
-# 1. O modelo de Média dos Valores Observáveis, que simplesmente prevê uma constante igual 
-#    à média de y (ignorando as variáveis explicativas), apresentou um RSS médio de aproximadamente 22.86.
-#    Esse valor alto indica que este modelo não captura bem  variabilidade dos dados.
-#
-# 2. Os modelos de regressão linear (tanto o MQO tradicional quanto os regularizados) apresentaram 
-#    RSS médios muito mais baixos, em torno de 4.34, demonstrando uma melhora significativa no ajuste aos dados.
-#    
-# 3. A diferença entre o MQO tradicional (λ = 0) e os modelos regularizados (λ = 0.25, 0.5, 0.75, 1)
-#    é mínima. Por exemplo, a média do RSS varia de 4.3381 para 4.3420 conforme λ aumenta de 0 a 1.
-#    Essa pequena variação indica que, para este conjunto de dados, a regularização não tem impacto
-#    expressivo no desempenho, sugerindo que o problema é bem condicionado e que não há grande risco de overfitting, conforme estudamos em sala de aula. 
-#
-# 4. O desvio-padrão dos valores de RSS também é baixo (por volta de 0.416), o que demonstra que 
-#    os modelos de regressão possuem um desempenho consistente em diferentes particionamentos dos dados.
+    # MQO regularizado (λ = 0.25)
+    beta_ridge_025_sim = ridge_regression(X_train, y_train, lbda=0.25)
+    y_pred_ridge_025 = predict(X_test, beta_ridge_025_sim)
+    rss_ridge_025 = compute_rss(y_test, y_pred_ridge_025)
+    rss_ridge_025_list.append(rss_ridge_025)
 
+    # MQO regularizado (λ = 0.5)
+    beta_ridge_05_sim = ridge_regression(X_train, y_train, lbda=0.5)
+    y_pred_ridge_05 = predict(X_test, beta_ridge_05_sim)
+    rss_ridge_05 = compute_rss(y_test, y_pred_ridge_05)
+    rss_ridge_05_list.append(rss_ridge_05)
 
+    # MQO regularizado (λ = 0.75)
+    beta_ridge_075_sim = ridge_regression(X_train, y_train, lbda=0.75)
+    y_pred_ridge_075 = predict(X_test, beta_ridge_075_sim)
+    rss_ridge_075 = compute_rss(y_test, y_pred_ridge_075)
+    rss_ridge_075_list.append(rss_ridge_075)
+
+    # MQO regularizado (λ = 1)
+    beta_ridge_1_sim = ridge_regression(X_train, y_train, lbda=1)
+    y_pred_ridge_1 = predict(X_test, beta_ridge_1_sim)
+    rss_ridge_1 = compute_rss(y_test, y_pred_ridge_1)
+    rss_ridge_1_list.append(rss_ridge_1)
+
+# =====================================================================
+# 6. Cálculo das Estatísticas e Exibição dos Resultados
+# =====================================================================
+
+def stats_from_list(rss_list):
+    """Retorna (média, desvio padrão, maior valor, menor valor) dos valores da lista."""
+    arr = np.array(rss_list)
+    return np.mean(arr), np.std(arr), np.max(arr), np.min(arr)
+
+mean_stats     = stats_from_list(rss_mean_list)
+ols_stats      = stats_from_list(rss_ols_list)
+ridge_025_stats = stats_from_list(rss_ridge_025_list)
+ridge_05_stats  = stats_from_list(rss_ridge_05_list)
+ridge_075_stats = stats_from_list(rss_ridge_075_list)
+ridge_1_stats   = stats_from_list(rss_ridge_1_list)
+
+# Exibe os resultados em uma tabela
+print("\nResultados da Validação Monte Carlo (RSS) - 500 Rodadas:\n")
+print(f"{'Modelo':<40} {'Média':>10} {'Std':>10} {'Maior Valor':>15} {'Menor Valor':>15}")
+print("-" * 90)
+print(f"{'Média de valores observáveis':<40} {mean_stats[0]:10.4f} {mean_stats[1]:10.4f} {mean_stats[2]:15.4f} {mean_stats[3]:15.4f}")
+print(f"{'MQO tradicional':<40} {ols_stats[0]:10.4f} {ols_stats[1]:10.4f} {ols_stats[2]:15.4f} {ols_stats[3]:15.4f}")
+print(f"{'MQO regularizado (λ=0.25)':<40} {ridge_025_stats[0]:10.4f} {ridge_025_stats[1]:10.4f} {ridge_025_stats[2]:15.4f} {ridge_025_stats[3]:15.4f}")
+print(f"{'MQO regularizado (λ=0.5)':<40} {ridge_05_stats[0]:10.4f} {ridge_05_stats[1]:10.4f} {ridge_05_stats[2]:15.4f} {ridge_05_stats[3]:15.4f}")
+print(f"{'MQO regularizado (λ=0.75)':<40} {ridge_075_stats[0]:10.4f} {ridge_075_stats[1]:10.4f} {ridge_075_stats[2]:15.4f} {ridge_075_stats[3]:15.4f}")
+print(f"{'MQO regularizado (λ=1)':<40} {ridge_1_stats[0]:10.4f} {ridge_1_stats[1]:10.4f} {ridge_1_stats[2]:15.4f} {ridge_1_stats[3]:15.4f}")
+
+"""
+Resultados e Discussões:
+-------------------------------------------------
+1. Estimativas do vetor β:
+   - MQO Tradicional (λ = 0) apresenta os seguintes coeficientes:
+       [[2.50236534]
+        [0.07237152]
+        [0.08504044]]
+     Isso indica que, com a inclusão dos preditores (temperatura e pH), o modelo ajusta um intercepto de cerca de 2.50,
+     e coeficientes positivos relativamente pequenos para os preditores, sugerindo uma relação positiva, mas moderada,
+     entre as variáveis independentes e a atividade enzimática.
+
+   - Nos modelos regularizados (Tikhonov/Ridge), para λ = 0 o resultado é idêntico ao OLS. Conforme λ aumenta 
+     (0.25, 0.5, 0.75, 1), observa-se um pequeno encolhimento dos coeficientes. Por exemplo, o intercepto passa de 
+     ~2.50236534 para ~2.49757089 quando λ = 1, enquanto os coeficientes dos preditores também sofrem variações mínimas. 
+     Esse comportamento é esperado, pois a regularização penaliza os coeficientes, promovendo maior estabilidade, 
+     sem alterar de forma significativa os valores estimados quando o ajuste é robusto.
+
+   - O Modelo da Média dos Valores Observáveis, que simplesmente utiliza a média da atividade enzimática como predição,
+     resulta em:
+       [[2.58165178]
+        [0.        ]
+        [0.        ]]
+     Isso evidencia que, sem utilizar os preditores, o modelo ignora a variação explicada pelas variáveis 
+     temperatura e pH e, portanto, não é ineficiente ao capturar a relação entre elas e a atividade enzimática.
+
+2. Validação Monte Carlo (RSS) - 500 Rodadas:
+   - O RSS do Modelo da Média dos Valores Observáveis é substancialmente maior (Média ≈ 22.7952) com uma variabilidade 
+     moderada (Std ≈ 1.2612), o que confirma que a simples predição pela média não captura a variabilidade dos dados.
+   
+   - O MQO Tradicional apresenta um RSS bem menor (Média ≈ 4.2931, Std ≈ 0.4540), indicando um muito bom ajuste 
+     ao utilizar os preditores.
+   
+   - Para valores de λ testados (0.25, 0.5, 0.75 e 1), o RSS médio varia levemente entre ~4.2929 e ~4.2952,
+     com um padrão consistente de aumento muito suave à medida que λ cresce.
+-------------------------------------------------
+"""
