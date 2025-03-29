@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import time
-from tqdm import tqdm
 
 # 1. Carregando e validando os dados ===========================================
 data_path = r"C:\Users\Bruno Matos\Desktop\IA_modelosderegressaoeclassificacao\dados\EMGsDataset.csv"
@@ -173,55 +171,46 @@ def monte_carlo_simulation(X, y, R=500):
     
     N = len(X)
     
-    with tqdm(total=R, desc="Simulação Monte Carlo", unit="rodada", 
-             bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]") as pbar:
+    for _ in range(R):
+        idx = np.random.permutation(N)
+        split = int(0.8 * N)
         
-        for _ in range(R):
-            idx = np.random.permutation(N)
-            split = int(0.8 * N)
-            
-            X_train, X_test = X[idx[:split]], X[idx[split:]]
-            y_train, y_test = y[idx[:split]], y[idx[split:]]
-            
-            # Função auxiliar para calcular acurácia
-            def calcular_acuracia(y_true, y_pred):
-                return np.mean(y_true == y_pred)
-            
-            # Avaliação dos modelos
-            # MQO
-            y_pred = MQO.classify(X_train, y_train, X_test)
-            results['MQO'].append(calcular_acuracia(y_test, y_pred))
-            
-            # Gaussianos Tradicional
-            y_pred = GaussianClassifier.traditional(X_train, y_train, X_test)
-            results['Gaussiano Tradicional'].append(calcular_acuracia(y_test, y_pred))
-            
-            # Gaussianos Cov. Iguais
-            y_pred = GaussianClassifier.equal_covariance(X_train, y_train, X_test)
-            results['Gaussiano Cov. Iguais'].append(calcular_acuracia(y_test, y_pred))
-            
-            # Gaussianos Cov. Agregada
-            y_pred = GaussianClassifier.aggregated_covariance(X_train, y_train, X_test)
-            results['Gaussiano Cov. Agregada'].append(calcular_acuracia(y_test, y_pred))
-            
-            # Friedman
-            for lam in results['Friedman']:
-                y_pred = GaussianClassifier.friedman(X_train, y_train, X_test, lam)
-                results['Friedman'][lam].append(calcular_acuracia(y_test, y_pred))
-            
-            # Naive Bayes
-            y_pred = NaiveBayes.classify(X_train, y_train, X_test)
-            results['Naive Bayes'].append(calcular_acuracia(y_test, y_pred))
-            
-            # Atualiza a barra de progresso
-            pbar.update(1)
-            pbar.set_postfix_str(f"Última acurácia: {results['MQO'][-1]:.2%}")
+        X_train, X_test = X[idx[:split]], X[idx[split:]]
+        y_train, y_test = y[idx[:split]], y[idx[split:]]
+        
+        # Função auxiliar para calcular acurácia
+        def calcular_acuracia(y_true, y_pred):
+            return np.mean(y_true == y_pred)
+        
+        # Avaliação dos modelos
+        # MQO
+        y_pred = MQO.classify(X_train, y_train, X_test)
+        results['MQO'].append(calcular_acuracia(y_test, y_pred))
+        
+        # Gaussianos Tradicional
+        y_pred = GaussianClassifier.traditional(X_train, y_train, X_test)
+        results['Gaussiano Tradicional'].append(calcular_acuracia(y_test, y_pred))
+        
+        # Gaussianos Cov. Iguais
+        y_pred = GaussianClassifier.equal_covariance(X_train, y_train, X_test)
+        results['Gaussiano Cov. Iguais'].append(calcular_acuracia(y_test, y_pred))
+        
+        # Gaussianos Cov. Agregada
+        y_pred = GaussianClassifier.aggregated_covariance(X_train, y_train, X_test)
+        results['Gaussiano Cov. Agregada'].append(calcular_acuracia(y_test, y_pred))
+        
+        # Friedman
+        for lam in results['Friedman']:
+            y_pred = GaussianClassifier.friedman(X_train, y_train, X_test, lam)
+            results['Friedman'][lam].append(calcular_acuracia(y_test, y_pred))
+        
+        # Naive Bayes
+        y_pred = NaiveBayes.classify(X_train, y_train, X_test)
+        results['Naive Bayes'].append(calcular_acuracia(y_test, y_pred))
     
     return results
 
 if __name__ == "__main__":
-    start_time = time.time()
-    
     # Configurações
     R = 500
     
@@ -273,9 +262,6 @@ if __name__ == "__main__":
             stats['min']
         ))
 
-    print("\nTempo total de execução: {:.2f} minutos".format(
-        (time.time() - start_time)/60))
-    
 """
 Resultados e Discussões:
 
@@ -341,16 +327,7 @@ dos modelos testados ao longo de 500 rodadas. A seguir, as principais observaç�
      pequeno, sugerindo que o conjunto de dados não sofre significativamente de problemas de
      covariância mal-condicionada.
 
-7. Tempo de Execução:
-   - O tempo total de execução foi de 86.97 minutos. Este tempo reflete a complexidade dos
-     cálculos necessários para estimar as matrizes de covariância e realizar 500 rodadas
-     de validação Monte Carlo.
-
 
 Por fim, os resultados confirmam que os classificadores gaussianos (tradicional, com covariâncias iguais
 ou regularizados) são altamente eficazes para este conjunto de dados, alcançando acurácias
-superiores a 96%. Os modelos com hipóteses mais simples, como Bayes Ingênuo e MQO, apresentaram
-desempenho inferior, mas ainda consistente, reforçando sua utilidade como linhas de base para
-comparação. A pequena variação nos desvios padrões indica alta estabilidade dos modelos durante
-as rodadas de validação, mas a escolha do modelo ideal continua sendo relativa ao contexto.
-"""
+superiores a 96%. Os modelos com hipóteses mais simples"""
