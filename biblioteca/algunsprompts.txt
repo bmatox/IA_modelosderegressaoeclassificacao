@@ -1,0 +1,44 @@
+por que convertemos os rótulos para int com .astype(int) se eles já forem inteiros, isso pode causar algum problema
+
+como eu sei se o np.logical_and tá filtrando certinho os rótulos válidos? eu não entendi bem como essa máscara funciona.
+
+pra que usar np.column_stack pra juntar os dados dos sensores? não dava pra fazer isso de outro jeito, tipo com np.concatenate
+
+na hora de criar a codificação one-hot com np.eye(c)[labels - 1], por que subtrai 1 dos rótulos? e se os rótulos já começassem em zero, como seria
+
+quando a gente transpõe os arrays pra x_bayes e y_bayes, isso muda alguma coisa nas operações que vamos fazer depois
+
+nos comandos do scatter, o que significam os parâmetros s=10 e alpha=0.6? isso é só pra deixar o gráfico bonito ou tem outro efeito
+
+pra que servem exatamente o plt.tight_layout() e o plt.show()? se eu tirar, o gráfico pode ficar meio bagunçado
+
+na classe gaussianclassifier, por que alguns métodos estão marcados como @staticmethod? qual a vantagem disso na prática
+
+dentro da função traditional, a gente usa np.cov com rowvar=false; o que muda se eu usar rowvar=true
+
+no método friedman, como o lambda_ altera a matriz sigma? tipo, como (1 - lambda_) * sigma + lambda_ * np.diag(np.diag(sigma)) funciona na prática
+
+por que usar np.einsum na função _predict pra calcular as distâncias? não dá pra fazer isso com um loop simples, que eu entenderia melhor
+
+no naivebayes, por que fazemos a soma de logaritmos em vez de multiplicar diretamente as probabilidades
+
+na classe mqo, por que a gente precisa adicionar uma coluna de 1’s com np.hstack antes de calcular o beta? é só pro intercepto mesmo
+
+no monte_carlo_simulation, como funciona o np.random.permutation e qual o efeito dessa divisão de 80% treino e 20% teste
+
+a função calcular_acuracia definida dentro da simulação ajuda a deixar o código mais legível
+
+na função get_stats, qual a vantagem de retornar um dicionário com média, desvio, máximo e mínimo em vez de uma tupla simples
+
+no print da tabela de resultados, como funciona a formatação com "{:>10.2%}"? como isso converte os números em porcentagens
+
+de forma geral, como decido quando usar np.linalg.inv em vez de np.linalg.pinv para inverter matrizes nesse código
+
+oque é msm validação monte carlo
+
+comando para baixar a lib mathplot e numpy 
+
+dividir os dados em múltiplas iterações para validação Monte Carlo no python como?
+
+etc
+
