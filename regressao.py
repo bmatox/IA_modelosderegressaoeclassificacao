@@ -185,6 +185,17 @@ print(f"{'MQO regularizado (λ=1)':<40} {ridge_1_stats[0]:10.4f} {ridge_1_stats[
 
 """
 Resultados e Discussões:
+
+Validação Monte Carlo (RSS) - 500 Rodadas:
+
+Modelo                                        Média        Std     Maior Valor     Menor Valor
+------------------------------------------------------------------------------------------
+Média de valores observáveis                22.9296     1.2145         26.3616         19.2166
+MQO tradicional                              4.3233     0.4499          5.6355          3.1832
+MQO regularizado (λ=0.25)                    4.3237     0.4502          5.6342          3.1858
+MQO regularizado (λ=0.5)                     4.3245     0.4505          5.6332          3.1890
+MQO regularizado (λ=0.75)                    4.3259     0.4509          5.6328          3.1926
+MQO regularizado (λ=1)                       4.3276     0.4514          5.6394          3.1969
 -------------------------------------------------
 1. Estimativas do vetor β:
    - MQO Tradicional (λ = 0) apresenta os seguintes coeficientes:
