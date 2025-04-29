@@ -1,5 +1,4 @@
 # Inteligência Artificial - Construção de modelos de regressão e classificação
-## Atividade avaliativa 1
 
 O presente projeto é composto por duas etapas em que deve-se utilizar os conceitos de IA baseados em modelos
 preditivos que realizam seu processo de aprendizagem através da minimização de uma função custo (loss
